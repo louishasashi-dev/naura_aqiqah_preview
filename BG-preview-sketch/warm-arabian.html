@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Warm Arabian Background Preview</title>
+    <link rel="stylesheet" href="css/warm-arabian.css">
+    <script src="js/preview.js" defer></script>
+</head>
+<body>
+    <div class="preview" aria-hidden="true">
+        <div class="preview__base"></div>
+        <div class="preview__paper"></div>
+        <div class="preview__light"></div>
+
+        <svg class="preview__noise" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <filter id="warm-noise">
+                <feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="3" stitchTiles="stitch"/>
+                <feColorMatrix type="saturate" values="0"/>
+            </filter>
+            <rect width="100%" height="100%" filter="url(#warm-noise)" opacity="0.2"/>
+        </svg>
+
+        <svg class="preview__lattice" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+            <defs>
+                <pattern id="warm-lattice" width="132" height="132" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
+                    <path d="M66 0 132 66 66 132 0 66Z M66 17 115 66 66 115 17 66Z" fill="none" stroke="#9B7A50" stroke-width="0.7" opacity="0.34"/>
+                    <circle cx="66" cy="66" r="7" fill="none" stroke="#9B7A50" stroke-width="0.6" opacity="0.32"/>
+                    <path d="M0 0 132 132 M132 0 0 132" stroke="#9B7A50" stroke-width="0.45" opacity="0.16"/>
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#warm-lattice)"/>
+        </svg>
+
+        <svg class="preview__marble" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none">
+            <g stroke="#A98B63" stroke-width="1" opacity="0.18">
+                <path d="M-80 690C120 620 236 716 410 648C578 582 690 646 846 596C1010 542 1132 610 1510 520"/>
+                <path d="M-90 742C136 676 252 764 436 696C604 634 724 690 872 646C1044 596 1178 660 1510 578"/>
+                <path d="M-60 796C150 732 282 818 460 750C630 686 750 738 906 700C1080 656 1220 714 1510 636"/>
+            </g>
+            <g stroke="#C6A66A" stroke-width="0.8" opacity="0.24">
+                <path d="M1090 -60C1030 130 1102 230 1044 374C1000 486 1058 574 1018 720C992 812 1026 862 1004 960"/>
+                <path d="M1160 -60C1100 126 1172 232 1114 380C1070 492 1128 580 1088 726C1062 818 1096 868 1074 960"/>
+            </g>
+        </svg>
+
+        <svg class="preview__ornament" viewBox="0 0 600 600" fill="none">
+            <defs>
+                <path id="warm-petal" d="M300 300C254 236 254 166 300 112C346 166 346 236 300 300Z"/>
+                <linearGradient id="warm-stroke" x1="90" y1="70" x2="510" y2="530" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#BD9C64"/>
+                    <stop offset="0.52" stop-color="#8E7050"/>
+                    <stop offset="1" stop-color="#C6A66A"/>
+                </linearGradient>
+            </defs>
+            <g stroke="url(#warm-stroke)" stroke-width="1.15">
+                <circle cx="300" cy="300" r="226" opacity="0.26"/>
+                <circle cx="300" cy="300" r="178" opacity="0.38"/>
+                <path d="M300 52 548 300 300 548 52 300Z" opacity="0.32"/>
+                <path d="M300 116 484 300 300 484 116 300Z" opacity="0.24"/>
+                <g opacity="0.3">
+                    <use href="#warm-petal"/>
+                    <use href="#warm-petal" transform="rotate(45 300 300)"/>
+                    <use href="#warm-petal" transform="rotate(90 300 300)"/>
+                    <use href="#warm-petal" transform="rotate(135 300 300)"/>
+                    <use href="#warm-petal" transform="rotate(180 300 300)"/>
+                    <use href="#warm-petal" transform="rotate(225 300 300)"/>
+                    <use href="#warm-petal" transform="rotate(270 300 300)"/>
+                    <use href="#warm-petal" transform="rotate(315 300 300)"/>
+                </g>
+                <circle cx="300" cy="300" r="24" opacity="0.42"/>
+                <path d="M300 276 324 300 300 324 276 300Z" opacity="0.5"/>
+            </g>
+        </svg>
+
+        <svg class="preview__arch" viewBox="0 0 520 620" fill="none">
+            <g stroke="#8E7050" stroke-width="1.1" opacity="0.2">
+                <path d="M46 620V286C46 154 150 48 260 26C370 48 474 154 474 286V620"/>
+                <path d="M96 620V296C96 180 174 90 260 68C346 90 424 180 424 296V620"/>
+                <path d="M146 620V306C146 206 198 132 260 110C322 132 374 206 374 306V620"/>
+                <path d="M260 26V620 M46 286H474"/>
+            </g>
+        </svg>
+
+        <div class="preview__grain"></div>
+        <div class="preview__vignette"></div>
+    </div>
+</body>
+</html>

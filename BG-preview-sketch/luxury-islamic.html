@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Luxury Islamic Background Preview</title>
+    <link rel="stylesheet" href="css/luxury-islamic.css">
+    <script src="js/preview.js" defer></script>
+</head>
+<body>
+    <div class="preview" aria-hidden="true">
+        <div class="preview__base"></div>
+        <div class="preview__light"></div>
+
+        <svg class="preview__noise" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <filter id="lux-noise">
+                <feTurbulence type="fractalNoise" baseFrequency="0.78" numOctaves="3" stitchTiles="stitch"/>
+                <feColorMatrix type="saturate" values="0"/>
+            </filter>
+            <rect width="100%" height="100%" filter="url(#lux-noise)" opacity="0.1"/>
+        </svg>
+
+        <svg class="preview__lattice" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+            <defs>
+                <pattern id="lux-lattice" width="160" height="160" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                    <path d="M80 0 160 80 80 160 0 80Z M80 18 142 80 80 142 18 80Z" fill="none" stroke="#D8BE7C" stroke-width="0.8" opacity="0.48"/>
+                    <path d="M0 0 160 160 M160 0 0 160" fill="none" stroke="#D8BE7C" stroke-width="0.55" opacity="0.2"/>
+                    <circle cx="80" cy="80" r="8" fill="none" stroke="#D8BE7C" stroke-width="0.7" opacity="0.5"/>
+                    <circle cx="0" cy="0" r="2.5" fill="#D8BE7C" opacity="0.45"/>
+                    <circle cx="160" cy="0" r="2.5" fill="#D8BE7C" opacity="0.45"/>
+                    <circle cx="0" cy="160" r="2.5" fill="#D8BE7C" opacity="0.45"/>
+                    <circle cx="160" cy="160" r="2.5" fill="#D8BE7C" opacity="0.45"/>
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#lux-lattice)"/>
+        </svg>
+
+        <svg class="preview__ornament" viewBox="0 0 600 600" fill="none">
+            <defs>
+                <path id="lux-petal" d="M300 300C252 238 252 164 300 108C348 164 348 238 300 300Z"/>
+                <linearGradient id="lux-stroke" x1="80" y1="60" x2="520" y2="540" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#F1DFAF"/>
+                    <stop offset="0.55" stop-color="#D8BE7C"/>
+                    <stop offset="1" stop-color="#9F8345"/>
+                </linearGradient>
+            </defs>
+            <g stroke="url(#lux-stroke)" stroke-width="1.65">
+                <circle cx="300" cy="300" r="232" opacity="0.32"/>
+                <circle cx="300" cy="300" r="188" opacity="0.5"/>
+                <circle cx="300" cy="300" r="142" opacity="0.38"/>
+                <path d="M300 34 366 234 566 300 366 366 300 566 234 366 34 300 234 234Z" opacity="0.58"/>
+                <path d="M300 104 356 244 496 300 356 356 300 496 244 356 104 300 244 244Z" opacity="0.4"/>
+                <g opacity="0.48">
+                    <use href="#lux-petal"/>
+                    <use href="#lux-petal" transform="rotate(45 300 300)"/>
+                    <use href="#lux-petal" transform="rotate(90 300 300)"/>
+                    <use href="#lux-petal" transform="rotate(135 300 300)"/>
+                    <use href="#lux-petal" transform="rotate(180 300 300)"/>
+                    <use href="#lux-petal" transform="rotate(225 300 300)"/>
+                    <use href="#lux-petal" transform="rotate(270 300 300)"/>
+                    <use href="#lux-petal" transform="rotate(315 300 300)"/>
+                </g>
+                <circle cx="300" cy="300" r="26" opacity="0.65"/>
+                <path d="M300 274 326 300 300 326 274 300Z" opacity="0.75"/>
+            </g>
+        </svg>
+
+        <svg class="preview__corner" viewBox="0 0 520 520" fill="none">
+            <g stroke="#D8BE7C" stroke-width="1.1" opacity="0.34">
+                <path d="M18 502C22 318 92 174 244 92C376 20 468 62 502 18"/>
+                <path d="M18 446C58 284 154 154 292 72C398 10 460 46 490 22"/>
+                <path d="M18 390C92 246 196 138 328 72C406 32 460 40 484 28"/>
+                <path d="M72 502C78 366 138 244 252 160C348 88 430 92 502 72"/>
+            </g>
+        </svg>
+
+        <div class="preview__grain"></div>
+        <div class="preview__vignette"></div>
+    </div>
+</body>
+</html>

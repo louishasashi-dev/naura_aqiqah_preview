@@ -1,0 +1,8 @@
+|**TEKS YANG ADA DI WEB NAURA AQIQAH DAN CATERING.**|
+|-|
+
+|**BERANDA - HERO SECTION<br /><br />**teks slide show 1 :<br /><br /><h1>AHLINYA AQIQAH</h1><br /><h1>KAMBING JANTAN</h1><br /><br /><p>naura aqiqah siap membantu ayah bunda</p><br /><p>melaksanakan aqiqah sesuai syariat \& halal</p><br /><br />teks slide show 2 : <br /><br /><h1><span>MUDAH</span>CEPAT<span>BERKAH</span></h1><br /><br /><p>Nikmati kemudahan aqiqah dengan layanan terbaik</p><br /><p>yang menjamin kehalalan dan kualitas</p><br /><br />\[tombol "PESAN PAKET AQIQAH"]|
+|-|
+
+|TENTANG - ABOUT SECTION<br /><br /><h1>JASA AQIQAH</h1><br /><h2>BERPENGALAMAN</h2><br /><h1>SUDAH 15th MELAYANI</h1><br /><br /><p>Naura Aqiqah terbukti berpengalaman dan menjadi pilihan ribuan orang untuk menunaikan Aqiqah</p><br /><p>Ayah Bunda. Makanan yang dijamin Enak \& Harga Terjangkau</p><br /><br /><icon> - logo-halal<br /><br /><h4>JAMINAN HALAL</h4><br /><p>Naura Aqiqah memastikan setiap tahapan proses aqiqah dilakukan sesuai dengan syariat dan tersertifikasi Halal</p><br /><br /><icon> - kualitas makanan<br /><br /><h4>KUALITAS MAKANAN</h4><br /><p>Kami sangat memperhatikan standar kebersihan di setiap tahap, mulai dari penyembelihan hingga pengolahan.</p><br /><br /><icon> - icon yang menggambar kan 'FLEKSIBEL PAKET".<br /><br /><h4>FELKSIBEL PAKET</h4><br /><p>Naura Aqiqah menawarkan berbagai paket yang bisa disesuaikan dengan kebutuhan dan anggaran Anda.</p><br /><br /><icon> - icon yang menggambarkan "PROFESIONALITAS!".<br /><br /><h4>PROFESIONAL</h4><br /><p>Tim Naura Aqiqah selalu siap membantu dan memberikan layanan terbaik dan profesional untuk Ayah Bunda.</p>|
+|-|
