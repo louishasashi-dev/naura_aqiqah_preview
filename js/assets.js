@@ -20,7 +20,7 @@ window.NAURA_ASSETS = {
       enabled: true
     },
     mascot: {
-      src: "docs/struktur-web/gambaran-section-ui%20web_files/iconnaura-copy-min.png",
+      src: "assets/img/logo/iconnaura-copy-min.png",
       alt: "Maskot Naura Aqiqah",
       label: "Maskot Naura Aqiqah",
       status: "ALTERNATIF",
@@ -36,7 +36,7 @@ window.NAURA_ASSETS = {
       enabled: true
     },
     menu1: {
-      src: "assets/img/menu_dan_boneka/menu/IMG_20250803_142241.jpg",
+      src: "assets/img/menu_dan_boneka/menu/Copy%20of%20IMG_20250803_142241.jpg",
       alt: "Foto menu Naura Aqiqah 1",
       label: "Menu 1",
       status: "ALTERNATIF",
@@ -44,7 +44,7 @@ window.NAURA_ASSETS = {
       enabled: true
     },
     menu2: {
-      src: "assets/img/menu_dan_boneka/menu/IMG_20250803_142436.jpg",
+      src: "assets/img/menu_dan_boneka/menu/IMG_20250803_144450.jpg",
       alt: "Foto menu Naura Aqiqah 2",
       label: "Menu 2",
       status: "ALTERNATIF",
@@ -52,7 +52,7 @@ window.NAURA_ASSETS = {
       enabled: true
     },
     menu3: {
-      src: "assets/img/menu_dan_boneka/menu/IMG_20250803_142808.jpg",
+      src: "assets/img/menu_dan_boneka/menu/Copy%20of%20IMG_20250803_142748.jpg",
       alt: "Foto menu Naura Aqiqah 3",
       label: "Menu 3",
       status: "ALTERNATIF",
@@ -60,7 +60,7 @@ window.NAURA_ASSETS = {
       enabled: true
     },
     menu4: {
-      src: "assets/img/menu_dan_boneka/menu/IMG_20250803_143324.jpg",
+      src: "assets/img/menu_dan_boneka/menu/Copy%20of%20IMG_20250803_143548.jpg",
       alt: "Foto menu Naura Aqiqah 4",
       label: "Menu 4",
       status: "ALTERNATIF",

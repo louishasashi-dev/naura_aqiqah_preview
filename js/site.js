@@ -51,6 +51,8 @@
 
     var links = Array.prototype.slice.call(nav.querySelectorAll("a"));
     var reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    var compact = window.matchMedia("(max-width: 1100px)");
+    var mobileMs = 250;
     var containerMs = 760;
     var linkMs = 360;
     var inStep = 90;
@@ -91,6 +93,12 @@
       });
     }
 
+    function clearDelays() {
+      links.forEach(function (link) {
+        link.style.transitionDelay = "";
+      });
+    }
+
     function finish(next) {
       isNormal = next;
       busy = false;
@@ -109,27 +117,52 @@
       isNormal = next;
       busy = false;
       queued = null;
+      clearDelays();
       setAttributes(next);
-      setDelays(0, false);
       shell.classList.toggle("nav-links-visible", next);
       shell.classList.toggle("nav-links-in", next);
     }
 
     function openNav(id) {
       setAttributes(true);
+      if (compact.matches) {
+        clearDelays();
+        shell.classList.add("nav-links-visible");
+        requestAnimationFrame(function () {
+          if (!isCurrent(id)) return;
+          shell.classList.add("nav-links-in");
+          later(function () {
+            if (isCurrent(id)) finish(true);
+          }, mobileMs);
+        });
+        return;
+      }
       setDelays(inStep, false);
       later(function () {
         if (!isCurrent(id)) return;
         shell.classList.add("nav-links-visible");
         requestAnimationFrame(function () {
           if (!isCurrent(id)) return;
-          shell.classList.add("nav-links-in");
-          finish(true);
+          requestAnimationFrame(function () {
+            if (!isCurrent(id)) return;
+            shell.classList.add("nav-links-in");
+            finish(true);
+          });
         });
       }, containerMs);
     }
 
     function closeNav(id) {
+      if (compact.matches) {
+        clearDelays();
+        shell.classList.remove("nav-links-in");
+        shell.classList.remove("nav-links-visible");
+        setAttributes(false);
+        later(function () {
+          if (isCurrent(id)) finish(false);
+        }, mobileMs);
+        return;
+      }
       setDelays(outStep, true);
       shell.classList.remove("nav-links-in");
       later(function () {
@@ -164,6 +197,10 @@
       setMode(!isNormal);
     });
 
+    document.addEventListener("click", function (event) {
+      if (isNormal && !shell.contains(event.target)) setMode(false);
+    });
+
     links.forEach(function (link) {
       link.addEventListener("click", function () {
         if (isNormal) setMode(false);
@@ -177,6 +214,20 @@
     if (reduced.addEventListener) {
       reduced.addEventListener("change", function () {
         snap(isNormal);
+      });
+    }
+
+    if (compact.addEventListener) {
+      compact.addEventListener("change", function () {
+        clearTimers();
+        run += 1;
+        isNormal = false;
+        busy = false;
+        queued = null;
+        clearDelays();
+        setAttributes(false);
+        shell.classList.remove("nav-links-visible");
+        shell.classList.remove("nav-links-in");
       });
     }
 
@@ -297,6 +348,12 @@
     }
 
     function measure() {
+      if (animating) {
+        animating = false;
+        pending = 0;
+        normalize();
+        updateCounter();
+      }
       var first = track.children[cloneCount];
       var second = track.children[cloneCount + 1];
       if (first && second) step = second.offsetLeft - first.offsetLeft;
@@ -457,6 +514,7 @@
     var prevButton = overlay.querySelector(".lightbox-prev");
     var nextButton = overlay.querySelector(".lightbox-next");
     var groups = [];
+    var background = Array.prototype.slice.call(document.querySelectorAll("body > :not(.lightbox)"));
     var currentGroup = 0;
     var currentIndex = 0;
     var lastTrigger = null;
@@ -500,12 +558,14 @@
       show();
       overlay.hidden = false;
       document.body.classList.add("lightbox-open");
+      background.forEach(function (el) { el.inert = true; });
       closeButton.focus();
     }
 
     function hide() {
       overlay.hidden = true;
       document.body.classList.remove("lightbox-open");
+      background.forEach(function (el) { el.inert = false; });
       image.removeAttribute("src");
       if (lastTrigger) lastTrigger.focus();
     }
@@ -536,6 +596,23 @@
       if (event.key === "Escape") hide();
       if (event.key === "ArrowLeft") move(-1);
       if (event.key === "ArrowRight") move(1);
+      if (event.key !== "Tab") return;
+      var focusable = Array.prototype.slice.call(overlay.querySelectorAll("button")).filter(function (button) {
+        return !button.hidden;
+      });
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+      if (!first) return;
+      if (!overlay.contains(document.activeElement)) {
+        event.preventDefault();
+        first.focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     });
   }
 
