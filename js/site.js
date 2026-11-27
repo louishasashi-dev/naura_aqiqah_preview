@@ -52,11 +52,11 @@
     var links = Array.prototype.slice.call(nav.querySelectorAll("a"));
     var reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     var compact = window.matchMedia("(max-width: 1100px)");
-    var mobileMs = 250;
-    var containerMs = 760;
-    var linkMs = 360;
-    var inStep = 90;
-    var outStep = 70;
+    var mobileMs = 180;
+    var containerMs = 60;
+    var linkMs = 180;
+    var inStep = 45;
+    var outStep = 40;
     var isNormal = false;
     var busy = false;
     var queued = null;
@@ -82,6 +82,7 @@
       toggle.setAttribute("aria-expanded", String(next));
       toggle.setAttribute("aria-label", next ? "Sembunyikan navigasi" : "Tampilkan navigasi");
       nav.setAttribute("aria-hidden", String(!next));
+      document.documentElement.classList.toggle("nav-is-open", next);
       if (next) nav.removeAttribute("inert");
       else nav.setAttribute("inert", "");
     }
@@ -201,14 +202,24 @@
       if (isNormal && !shell.contains(event.target)) setMode(false);
     });
 
-    links.forEach(function (link) {
-      link.addEventListener("click", function () {
-        if (isNormal) setMode(false);
-      });
-    });
+    function closeFromUserScroll(event) {
+      if (!isNormal) return;
+      if (event && event.target && nav.contains(event.target)) return;
+      setMode(false);
+    }
+
+    window.addEventListener("wheel", closeFromUserScroll, { passive: true });
+    window.addEventListener("touchmove", closeFromUserScroll, { passive: true });
 
     document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape" && isNormal) setMode(false);
+      if (event.key === "Escape" && isNormal) {
+        setMode(false);
+        return;
+      }
+      if (!isNormal || nav.contains(document.activeElement)) return;
+      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " ", "Spacebar"].indexOf(event.key) !== -1) {
+        setMode(false);
+      }
     });
 
     if (reduced.addEventListener) {
@@ -701,6 +712,7 @@
     var originals = track ? Array.prototype.slice.call(track.querySelectorAll(options.item)) : [];
     if (!viewport || !track || !counter || !prev || !next || !originals.length) return null;
 
+    var loop = options.loop !== false;
     var reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     var onMove = options.onMove || function () {};
     var onClone = options.onClone || function () {};
@@ -729,7 +741,11 @@
     }
 
     function targetCloneCount() {
-      return Math.min(visibleCount(), realCount);
+      return loop ? Math.min(visibleCount(), realCount) : 0;
+    }
+
+    function lastPosition() {
+      return Math.max(0, realCount - visibleCount());
     }
 
     function normalizedIndex() {
@@ -737,7 +753,12 @@
     }
 
     function updateCounter() {
-      counter.textContent = pad(normalizedIndex() + 1) + " / " + pad(realCount);
+      counter.textContent = pad((loop ? normalizedIndex() : position) + 1) + " / " + pad(realCount);
+    }
+
+    function updateButtons() {
+      prev.disabled = !loop && position <= 0;
+      next.disabled = !loop && position >= lastPosition();
     }
 
     function applyTransform(animate) {
@@ -770,21 +791,32 @@
         step = first.getBoundingClientRect().width + gap;
       }
       applyTransform(false);
+      updateButtons();
       onSettle();
     }
 
     function move(delta) {
       if (!delta || realCount < 2) return;
+      if (!loop && !animating) {
+        var target = Math.max(0, Math.min(lastPosition(), position + delta));
+        if (target === position) {
+          updateButtons();
+          return;
+        }
+      }
       onMove();
       if (animating) {
         pending = delta;
         return;
       }
       position += delta;
+      if (!loop) position = Math.max(0, Math.min(lastPosition(), position));
+      updateButtons();
       if (reduced.matches) {
         normalize();
         applyTransform(false);
         updateCounter();
+        updateButtons();
         onSettle();
         return;
       }
@@ -798,26 +830,30 @@
         card.remove();
       });
       cloneCount = targetCloneCount();
-      originals.slice(-cloneCount).forEach(function (card) {
-        var clone = card.cloneNode(true);
-        clone.classList.add("is-clone");
-        clone.setAttribute("aria-hidden", "true");
-        clone.inert = true;
-        onClone(clone);
-        track.insertBefore(clone, originals[0]);
-      });
-      originals.slice(0, cloneCount).forEach(function (card) {
-        var clone = card.cloneNode(true);
-        clone.classList.add("is-clone");
-        clone.setAttribute("aria-hidden", "true");
-        clone.inert = true;
-        onClone(clone);
-        track.appendChild(clone);
-      });
+      if (loop) {
+        originals.slice(-cloneCount).forEach(function (card) {
+          var clone = card.cloneNode(true);
+          clone.classList.add("is-clone");
+          clone.setAttribute("aria-hidden", "true");
+          clone.inert = true;
+          onClone(clone);
+          track.insertBefore(clone, originals[0]);
+        });
+        originals.slice(0, cloneCount).forEach(function (card) {
+          var clone = card.cloneNode(true);
+          clone.classList.add("is-clone");
+          clone.setAttribute("aria-hidden", "true");
+          clone.inert = true;
+          onClone(clone);
+          track.appendChild(clone);
+        });
+      }
       track.querySelectorAll("img").forEach(function (image) {
         image.setAttribute("draggable", "false");
       });
-      position = cloneCount + current;
+      position = loop
+        ? cloneCount + current
+        : Math.max(0, Math.min(lastPosition(), current));
       animating = false;
       pending = 0;
       measure();
@@ -831,6 +867,7 @@
       normalize();
       applyTransform(false);
       updateCounter();
+      updateButtons();
       onSettle();
       if (pending) {
         var delta = pending;
@@ -890,11 +927,294 @@
     return { refresh: function () { rebuild(true); } };
   }
 
+  function setupMenuPrice(root) {
+    var noop = function () {};
+    if (!root) return { refresh: noop };
+    var dialog = root.querySelector(".menu-preview-dialog");
+    var buttons = Array.prototype.slice.call(root.querySelectorAll(".menu-price-photo"));
+    if (!dialog || !buttons.length) return { refresh: noop };
+
+    var image = dialog.querySelector(".menu-preview-image");
+    var stage = dialog.querySelector(".menu-preview-stage");
+    var closeButton = dialog.querySelector(".menu-preview-close");
+    var prevButton = dialog.querySelector(".menu-preview-prev");
+    var nextButton = dialog.querySelector(".menu-preview-next");
+    var indicator = dialog.querySelector(".menu-preview-indicator");
+    var index = 0;
+    var lastTrigger = null;
+    var swipe = null;
+
+    function pad(value) {
+      return String(value).padStart(2, "0");
+    }
+
+    function update() {
+      var source = buttons[index].querySelector("img");
+      if (!source) return;
+      image.src = source.getAttribute("src");
+      image.alt = source.getAttribute("alt");
+      indicator.textContent = pad(index + 1) + " / " + pad(buttons.length);
+      prevButton.disabled = index === 0;
+      nextButton.disabled = index === buttons.length - 1;
+    }
+
+    function move(delta) {
+      var target = Math.max(0, Math.min(buttons.length - 1, index + delta));
+      if (target === index) return;
+      index = target;
+      update();
+    }
+
+    function open(button) {
+      var nextIndex = buttons.indexOf(button);
+      if (nextIndex < 0 || dialog.open) return;
+      index = nextIndex;
+      lastTrigger = button;
+      update();
+      var scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.documentElement.style.setProperty("--menu-preview-scrollbar-width", scrollbarWidth + "px");
+      document.body.classList.add("menu-preview-open");
+      dialog.showModal();
+      closeButton.focus({ preventScroll: true });
+    }
+
+    root.addEventListener("click", function (event) {
+      var photo = event.target.closest(".menu-price-photo");
+      if (photo) open(photo);
+    });
+
+    closeButton.addEventListener("click", function () {
+      dialog.close();
+    });
+
+    prevButton.addEventListener("click", function () { move(-1); });
+    nextButton.addEventListener("click", function () { move(1); });
+
+    stage.addEventListener("pointerdown", function (event) {
+      if (event.button && event.button !== 0) return;
+      swipe = { x: event.clientX, y: event.clientY };
+    });
+
+    stage.addEventListener("pointerup", function (event) {
+      if (!swipe) return;
+      var deltaX = event.clientX - swipe.x;
+      var deltaY = event.clientY - swipe.y;
+      swipe = null;
+      if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY)) {
+        move(deltaX < 0 ? 1 : -1);
+      }
+    });
+
+    stage.addEventListener("pointercancel", function () {
+      swipe = null;
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (!dialog.open) return;
+      if (event.key === "ArrowLeft") move(-1);
+      if (event.key === "ArrowRight") move(1);
+    });
+
+    dialog.addEventListener("click", function (event) {
+      if (event.target === dialog) dialog.close();
+    });
+
+    dialog.addEventListener("close", function () {
+      document.body.classList.remove("menu-preview-open");
+      document.documentElement.style.removeProperty("--menu-preview-scrollbar-width");
+      image.removeAttribute("src");
+      if (lastTrigger && document.contains(lastTrigger)) lastTrigger.focus({ preventScroll: true });
+      lastTrigger = null;
+    });
+
+    return { refresh: update };
+  }
+
+  function tiktokRelativeLabel(isoDate, now) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return "-";
+    var parts = isoDate.split("-");
+    var year = Number(parts[0]);
+    var month = Number(parts[1]);
+    var day = Number(parts[2]);
+    var posted = new Date(Date.UTC(year, month - 1, day));
+    if (posted.getUTCFullYear() !== year || posted.getUTCMonth() !== month - 1 || posted.getUTCDate() !== day) return "-";
+    var current = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
+    var today = Date.UTC(current.getFullYear(), current.getMonth(), current.getDate());
+    var post = Date.UTC(year, month - 1, day);
+    var days = Math.round((today - post) / 86400000);
+    if (days < 0) return "";
+    if (days === 0) return "hari ini";
+    if (days < 7) return days + " hari yang lalu";
+    var months = (current.getFullYear() - year) * 12 + (current.getMonth() - (month - 1));
+    if (current.getDate() < day) months -= 1;
+    if (months < 1) return Math.floor(days / 7) + " minggu yang lalu";
+    if (months < 12) return months + " bulan yang lalu";
+    return Math.floor(months / 12) + " tahun yang lalu";
+  }
+
+  function tiktokFullDate(isoDate) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return "";
+    var parts = isoDate.split("-");
+    var year = Number(parts[0]);
+    var month = Number(parts[1]);
+    var day = Number(parts[2]);
+    var posted = new Date(Date.UTC(year, month - 1, day));
+    if (posted.getUTCFullYear() !== year || posted.getUTCMonth() !== month - 1 || posted.getUTCDate() !== day) return "";
+    return new Intl.DateTimeFormat("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "Asia/Jakarta"
+    }).format(posted);
+  }
+
+  function setupTikTokVideos(root) {
+    var noop = function () {};
+    var empty = {
+      refresh: noop,
+      syncClones: noop
+    };
+    if (!root) return empty;
+    var viewport = root.querySelector(".tt-viewport");
+    var track = root.querySelector(".tt-track");
+    var dialog = root.closest("section").querySelector(".tt-dialog");
+    if (!viewport || !track || !dialog) return empty;
+
+    var closeButton = dialog.querySelector(".tt-dialog-close");
+    var closeTextButton = dialog.querySelector(".tt-dialog-close-text");
+    var dialogImage = dialog.querySelector(".tt-dialog-image");
+    var dialogDate = dialog.querySelector(".tt-dialog-date");
+    var dialogDesc = dialog.querySelector(".tt-dialog-desc");
+    var dialogLink = dialog.querySelector(".tt-dialog-link");
+    var lastTrigger = null;
+    var resizeFrame = 0;
+
+    function isClamped(element) {
+      var style = window.getComputedStyle(element);
+      var lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.55;
+      return element.scrollHeight > Math.ceil(lineHeight * 3) + 1;
+    }
+
+    function syncClones() {
+      var bounds = viewport.getBoundingClientRect();
+      track.querySelectorAll(".tt-card.is-clone").forEach(function (card) {
+        var box = card.getBoundingClientRect();
+        var visible = box.right > bounds.left + 1 && box.left < bounds.right - 1;
+        card.inert = !visible;
+        card.setAttribute("aria-hidden", String(!visible));
+      });
+    }
+
+    function updateDates() {
+      root.querySelectorAll(".tt-meta time").forEach(function (time) {
+        var relative = time.nextElementSibling;
+        if (!relative || !relative.classList.contains("tt-relative")) return;
+        relative.textContent = tiktokRelativeLabel(time.getAttribute("datetime"), new Date());
+      });
+    }
+
+    function recalculate() {
+      track.querySelectorAll(".tt-card").forEach(function (card) {
+        var desc = card.querySelector(".tt-desc");
+        var more = card.querySelector(".tt-more");
+        if (!desc || !more) return;
+        more.hidden = !isClamped(desc);
+      });
+      updateDates();
+      syncClones();
+    }
+
+    function openDialog(card, trigger) {
+      if (!card || dialog.open) return;
+      var media = card.querySelector(".tt-media img");
+      var desc = card.querySelector(".tt-desc");
+      var time = card.querySelector(".tt-meta time");
+      var link = card.querySelector(".tt-link");
+      var descText = desc ? desc.innerText.trim() : "";
+      if (dialogImage) {
+        var src = media ? media.getAttribute("src") : "";
+        dialogImage.src = src || "";
+        dialogImage.hidden = !src;
+      }
+      dialogDate.textContent = time ? tiktokFullDate(time.getAttribute("datetime")) : "";
+      dialogDesc.textContent = descText;
+      dialogDesc.hidden = !descText;
+      var href = link ? link.getAttribute("href") : "";
+      if (href) {
+        dialogLink.href = href;
+        dialogLink.hidden = false;
+      } else {
+        dialogLink.removeAttribute("href");
+        dialogLink.hidden = true;
+      }
+      lastTrigger = trigger;
+      var scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.documentElement.style.setProperty("--tt-scrollbar-width", scrollbarWidth + "px");
+      document.body.classList.add("tt-dialog-open");
+      dialog.showModal();
+      closeButton.focus({ preventScroll: true });
+    }
+
+    closeButton.addEventListener("click", function () {
+      dialog.close();
+    });
+
+    if (closeTextButton) {
+      closeTextButton.addEventListener("click", function () {
+        dialog.close();
+      });
+    }
+
+    dialog.addEventListener("click", function (event) {
+      if (event.target === dialog) dialog.close();
+    });
+
+    dialog.addEventListener("close", function () {
+      document.body.classList.remove("tt-dialog-open");
+      document.documentElement.style.removeProperty("--tt-scrollbar-width");
+      if (lastTrigger && document.contains(lastTrigger)) lastTrigger.focus({ preventScroll: true });
+      lastTrigger = null;
+    });
+
+    track.addEventListener("click", function (event) {
+      var more = event.target.closest(".tt-more");
+      if (more) openDialog(more.closest(".tt-card"), more);
+    });
+
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) updateDates();
+    });
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function () {
+        recalculate();
+      });
+    }
+    window.addEventListener("load", recalculate);
+    window.addEventListener("resize", function () {
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(function () {
+        resizeFrame = requestAnimationFrame(recalculate);
+      });
+    });
+
+    recalculate();
+
+    return {
+      refresh: recalculate,
+      syncClones: syncClones
+    };
+  }
+
   function setupCarousel() {
     var youtubeRoot = document.querySelector("[data-carousel='youtube']");
     var youtubeVideos = setupYouTubeVideos(youtubeRoot);
+    var tiktokRoot = document.querySelector("[data-carousel='tiktok']");
+    var tiktokVideos = setupTikTokVideos(tiktokRoot);
     var testimoniRoot = document.querySelector("[data-carousel='testimoni']");
     var reviewCards = setupReviewCards(testimoniRoot);
+    var menuPriceRoot = document.querySelector("[data-carousel='menu-harga']");
+    var menuPreview = setupMenuPrice(menuPriceRoot);
     var instances = [];
     var docs = createCarousel(document.querySelector("[data-carousel='docs']"), {
       viewport: ".doc-viewport",
@@ -903,6 +1223,15 @@
       counter: ".doc-counter",
       prev: ".doc-prev",
       next: ".doc-next"
+    });
+    var menuPrice = createCarousel(menuPriceRoot, {
+      viewport: ".menu-price-viewport",
+      track: ".menu-price-track",
+      item: ".menu-price-card",
+      counter: ".menu-price-counter",
+      prev: ".menu-price-prev",
+      next: ".menu-price-next",
+      loop: false
     });
     var youtube = createCarousel(youtubeRoot, {
       viewport: ".yt-viewport",
@@ -913,6 +1242,16 @@
       next: ".yt-next",
       onRebuild: youtubeVideos.refresh,
       onSettle: youtubeVideos.syncClones
+    });
+    var tiktok = createCarousel(tiktokRoot, {
+      viewport: ".tt-viewport",
+      track: ".tt-track",
+      item: ".tt-card",
+      counter: ".tt-counter",
+      prev: ".tt-prev",
+      next: ".tt-next",
+      onRebuild: tiktokVideos.refresh,
+      onSettle: tiktokVideos.syncClones
     });
     var testimoni = createCarousel(testimoniRoot, {
       viewport: ".testimonial-viewport",
@@ -926,7 +1265,10 @@
       onSettle: reviewCards.syncClones
     });
     if (docs) instances.push(docs);
+    if (menuPrice) instances.push(menuPrice);
+    if (menuPreview) instances.push(menuPreview);
     if (youtube) instances.push(youtube);
+    if (tiktok) instances.push(tiktok);
     if (testimoni) instances.push(testimoni);
     return instances;
   }

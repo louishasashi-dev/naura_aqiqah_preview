@@ -12,8 +12,8 @@ window.NAURA_ASSETS = {
       enabled: true
     },
     hero: {
-      src: "assets/img/logo/iconnauraaqiqah-full.png",
-      alt: "Ilustrasi lengkap Naura Aqiqah",
+      src: "assets/img/menu_dan_boneka/menu/menu-biasa/menu1.jpg",
+      alt: "Menu nasi box aqiqah Naura",
       label: "Hero — iconnauraaqiqah-full.png",
       status: "ALTERNATIF",
       verified: false,
@@ -36,7 +36,7 @@ window.NAURA_ASSETS = {
       enabled: true
     },
     menu1: {
-      src: "assets/img/menu_dan_boneka/menu/Copy%20of%20IMG_20250803_142241.jpg",
+      src: "assets/img/menu_dan_boneka/menu/menu-biasa/menu1.jpg",
       alt: "Foto menu Naura Aqiqah 1",
       label: "Menu 1",
       status: "ALTERNATIF",
@@ -44,25 +44,9 @@ window.NAURA_ASSETS = {
       enabled: true
     },
     menu2: {
-      src: "assets/img/menu_dan_boneka/menu/IMG_20250803_144450.jpg",
+      src: "assets/img/menu_dan_boneka/menu/menu-kebuli/menukebuli1.jpg",
       alt: "Foto menu Naura Aqiqah 2",
       label: "Menu 2",
-      status: "ALTERNATIF",
-      verified: false,
-      enabled: true
-    },
-    menu3: {
-      src: "assets/img/menu_dan_boneka/menu/Copy%20of%20IMG_20250803_142748.jpg",
-      alt: "Foto menu Naura Aqiqah 3",
-      label: "Menu 3",
-      status: "ALTERNATIF",
-      verified: false,
-      enabled: true
-    },
-    menu4: {
-      src: "assets/img/menu_dan_boneka/menu/Copy%20of%20IMG_20250803_143548.jpg",
-      alt: "Foto menu Naura Aqiqah 4",
-      label: "Menu 4",
       status: "ALTERNATIF",
       verified: false,
       enabled: true
