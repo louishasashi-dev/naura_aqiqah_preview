@@ -12,9 +12,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     <title>Naura Aqiqah &amp; Catering — Ahlinya Aqiqah Kambing Jantan</title>
-    <link rel="stylesheet" href="css/style.css?v=20261127">
-    <script src="js/assets.js?v=20261127" defer></script>
-    <script src="js/site.js?v=20261127" defer></script>
+    <link rel="stylesheet" href="css/style.css?v=20261127c">
+    <script src="js/assets.js?v=20261127c" defer></script>
+    <script src="js/site.js?v=20261127c" defer></script>
 </head>
 
 <body>
@@ -440,7 +440,12 @@
                     </div>
                 </div>
                 <dialog class="yt-dialog" id="yt-detail-dialog" aria-labelledby="yt-dialog-title">
-                    <button class="yt-dialog-close" type="button" aria-label="Tutup detail video">×</button>
+                    <button class="yt-dialog-close" type="button" aria-label="Tutup detail video">
+                        <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" focusable="false">
+                            <path d="M6 6L18 18M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" />
+                        </svg>
+                    </button>
                     <span class="yt-dialog-date"></span>
                     <h2 id="yt-dialog-title"></h2>
                     <p class="yt-dialog-desc" hidden></p>
@@ -658,24 +663,33 @@
                             aria-label="Testimoni berikutnya"><span aria-hidden="true">→</span></button>
                     </div>
                     <dialog class="review-dialog" id="review-detail-dialog" aria-labelledby="review-dialog-title">
-                        <button class="review-dialog-close" type="button" aria-label="Tutup detail ulasan">×</button>
+                        <button class="review-dialog-close" type="button" aria-label="Tutup detail ulasan">
+                            <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" focusable="false">
+                                <path d="M6 6L18 18M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" />
+                            </svg>
+                        </button>
                         <div class="review-dialog-scroll">
-                            <div class="review-dialog-media">
-                                <button class="review-dialog-nav review-dialog-prev" type="button"
-                                    aria-label="Foto sebelumnya">‹</button>
-                                <img class="review-dialog-image" alt="">
-                                <button class="review-dialog-nav review-dialog-next" type="button"
-                                    aria-label="Foto berikutnya">›</button>
-                                <div class="review-dialog-indicator" aria-live="polite"></div>
+                            <div class="review-dialog-body">
+                                <div class="review-dialog-media">
+                                    <button class="review-dialog-nav review-dialog-prev" type="button"
+                                        aria-label="Foto sebelumnya">‹</button>
+                                    <img class="review-dialog-image" alt="">
+                                    <button class="review-dialog-nav review-dialog-next" type="button"
+                                        aria-label="Foto berikutnya">›</button>
+                                    <div class="review-dialog-indicator" aria-live="polite"></div>
+                                </div>
+                                <div class="review-dialog-copy">
+                                    <div class="review-dialog-stars"></div>
+                                    <span class="review-dialog-waktu"></span>
+                                    <h2 id="review-dialog-title"></h2>
+                                    <span class="review-dialog-sumber"></span>
+                                    <p class="review-dialog-text"></p>
+                                </div>
                             </div>
-                            <div class="review-dialog-copy">
-                                <div class="review-dialog-stars"></div>
-                                <span class="review-dialog-waktu"></span>
-                                <h2 id="review-dialog-title"></h2>
-                                <span class="review-dialog-sumber"></span>
-                                <p class="review-dialog-text"></p>
-                                <a class="review-dialog-link btn btn-primary" target="_blank" rel="noopener">Lihat ulasan di Google Maps</a>
-                            </div>
+                        </div>
+                        <div class="review-dialog-footer">
+                            <a class="review-dialog-link btn btn-primary" target="_blank" rel="noopener">Lihat di Google Maps</a>
                         </div>
                     </dialog>
                 </div>

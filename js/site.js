@@ -528,12 +528,6 @@
         mobileHint.className = "review-photo-hint-mobile";
         mobileHint.textContent = photoHint(count);
         tap.appendChild(frame);
-        if (count > 1) {
-          var badge = document.createElement("span");
-          badge.className = "review-photo-badge";
-          badge.textContent = count + " foto";
-          tap.appendChild(badge);
-        }
         tap.appendChild(mobileHint);
         photosArea.insertAdjacentElement("afterend", tap);
       }
