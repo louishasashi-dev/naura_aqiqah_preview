@@ -305,28 +305,163 @@
     sync();
   }
 
-  function setupCarousel() {
-    var root = document.querySelector("[data-carousel='docs']");
+  function setupYouTubeVideos(root) {
+    var noop = function () {};
+    var empty = {
+      refresh: noop,
+      syncClones: noop
+    };
+    if (!root) return empty;
+    var viewport = root.querySelector(".yt-viewport");
+    var track = root.querySelector(".yt-track");
+    var dialog = root.closest("section").querySelector(".yt-dialog");
+    if (!viewport || !track || !dialog) return empty;
+
+    var closeButton = dialog.querySelector(".yt-dialog-close");
+    var dialogDate = dialog.querySelector(".yt-dialog-date");
+    var dialogTitle = dialog.querySelector("#yt-dialog-title");
+    var dialogDesc = dialog.querySelector(".yt-dialog-desc");
+    var dialogLink = dialog.querySelector(".yt-dialog-link");
+    var lastTrigger = null;
+    var resizeFrame = 0;
+
+    function isClamped(element) {
+      var style = window.getComputedStyle(element);
+      var lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.55;
+      return element.scrollHeight > Math.ceil(lineHeight * 3) + 1;
+    }
+
+    function syncClones() {
+      var bounds = viewport.getBoundingClientRect();
+      track.querySelectorAll(".yt-card.is-clone").forEach(function (card) {
+        var box = card.getBoundingClientRect();
+        var visible = box.right > bounds.left + 1 && box.left < bounds.right - 1;
+        card.inert = !visible;
+        card.setAttribute("aria-hidden", String(!visible));
+      });
+    }
+
+    function recalculate() {
+      track.querySelectorAll(".yt-card").forEach(function (card) {
+        var title = card.querySelector("h3");
+        var desc = card.querySelector(".yt-desc");
+        var more = card.querySelector(".yt-more");
+        if (!title || !desc || !more) return;
+        more.hidden = !(isClamped(title) || isClamped(desc));
+      });
+      syncClones();
+    }
+
+    function openDialog(card, trigger) {
+      if (!card || dialog.open) return;
+      var title = card.querySelector("h3");
+      var desc = card.querySelector(".yt-desc");
+      var date = card.querySelector(".yt-meta");
+      var link = card.querySelector(".yt-link");
+      var descText = desc ? desc.innerText.trim() : "";
+      dialogTitle.textContent = title ? title.textContent.replace(/\s+/g, " ").trim() : "";
+      dialogDate.textContent = date ? date.textContent.trim() : "";
+      dialogDesc.textContent = descText;
+      dialogDesc.hidden = !descText;
+      var href = link ? link.getAttribute("href") : "";
+      if (href) {
+        dialogLink.href = href;
+        dialogLink.hidden = false;
+      } else {
+        dialogLink.removeAttribute("href");
+        dialogLink.hidden = true;
+      }
+      lastTrigger = trigger;
+      var scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.documentElement.style.setProperty("--yt-scrollbar-width", scrollbarWidth + "px");
+      document.body.classList.add("yt-dialog-open");
+      dialog.showModal();
+      closeButton.focus({ preventScroll: true });
+    }
+
+    closeButton.addEventListener("click", function () {
+      dialog.close();
+    });
+
+    dialog.addEventListener("click", function (event) {
+      if (event.target === dialog) dialog.close();
+    });
+
+    dialog.addEventListener("close", function () {
+      document.body.classList.remove("yt-dialog-open");
+      document.documentElement.style.removeProperty("--yt-scrollbar-width");
+      if (lastTrigger && document.contains(lastTrigger)) lastTrigger.focus({ preventScroll: true });
+      lastTrigger = null;
+    });
+
+    track.addEventListener("click", function (event) {
+      var more = event.target.closest(".yt-more");
+      if (more) {
+        openDialog(more.closest(".yt-card"), more);
+        return;
+      }
+    });
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function () {
+        recalculate();
+      });
+    }
+    window.addEventListener("load", recalculate);
+    window.addEventListener("resize", function () {
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(function () {
+        resizeFrame = requestAnimationFrame(recalculate);
+      });
+    });
+
+    recalculate();
+
+    return {
+      refresh: recalculate,
+      syncClones: syncClones
+    };
+  }
+
+  function createCarousel(root, options) {
     if (!root) return null;
 
-    var viewport = root.querySelector(".doc-viewport");
-    var track = root.querySelector(".doc-track");
-    var originals = Array.prototype.slice.call(track.querySelectorAll(".doc-card"));
-    var counter = root.querySelector(".doc-counter");
-    var prev = root.querySelector(".doc-prev");
-    var next = root.querySelector(".doc-next");
+    var viewport = root.querySelector(options.viewport);
+    var track = root.querySelector(options.track);
+    var counter = root.querySelector(options.counter);
+    var prev = root.querySelector(options.prev);
+    var next = root.querySelector(options.next);
+    var originals = track ? Array.prototype.slice.call(track.querySelectorAll(options.item)) : [];
+    if (!viewport || !track || !counter || !prev || !next || !originals.length) return null;
+
     var reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-    var cloneCount = 3;
+    var onMove = options.onMove || function () {};
+    var onClone = options.onClone || function () {};
+    var onRebuild = options.onRebuild || function () {};
+    var onSettle = options.onSettle || function () {};
+    var cloneCount = 0;
     var realCount = originals.length;
-    var position = cloneCount;
+    var position = 0;
     var step = 0;
     var animating = false;
     var pending = 0;
-    var startX = null;
+    var start = null;
+    var suppressClick = false;
+    var suppressTimer = 0;
     var resizeFrame = 0;
 
     function pad(value) {
       return String(value).padStart(2, "0");
+    }
+
+    function visibleCount() {
+      if (window.innerWidth <= 640) return 1;
+      if (window.innerWidth <= 1100) return 2;
+      return 3;
+    }
+
+    function targetCloneCount() {
+      return Math.min(visibleCount(), realCount);
     }
 
     function normalizedIndex() {
@@ -347,6 +482,11 @@
       }
     }
 
+    function normalize() {
+      while (position >= cloneCount + realCount) position -= realCount;
+      while (position < cloneCount) position += realCount;
+    }
+
     function measure() {
       if (animating) {
         animating = false;
@@ -357,20 +497,17 @@
       var first = track.children[cloneCount];
       var second = track.children[cloneCount + 1];
       if (first && second) step = second.offsetLeft - first.offsetLeft;
-      if (!step) {
+      if (!step && first) {
         var gap = parseFloat(getComputedStyle(track).gap) || 0;
         step = first.getBoundingClientRect().width + gap;
       }
       applyTransform(false);
-    }
-
-    function normalize() {
-      while (position >= cloneCount + realCount) position -= realCount;
-      while (position < cloneCount) position += realCount;
+      onSettle();
     }
 
     function move(delta) {
       if (!delta || realCount < 2) return;
+      onMove();
       if (animating) {
         pending = delta;
         return;
@@ -380,36 +517,44 @@
         normalize();
         applyTransform(false);
         updateCounter();
+        onSettle();
         return;
       }
       animating = true;
       applyTransform(true);
     }
 
-    function rebuild() {
-      track.querySelectorAll(".doc-card.is-clone").forEach(function (card) {
+    function rebuild(preserveIndex) {
+      var current = preserveIndex ? normalizedIndex() : 0;
+      track.querySelectorAll(options.item + ".is-clone").forEach(function (card) {
         card.remove();
       });
+      cloneCount = targetCloneCount();
       originals.slice(-cloneCount).forEach(function (card) {
         var clone = card.cloneNode(true);
         clone.classList.add("is-clone");
         clone.setAttribute("aria-hidden", "true");
+        clone.inert = true;
+        onClone(clone);
         track.insertBefore(clone, originals[0]);
       });
       originals.slice(0, cloneCount).forEach(function (card) {
         var clone = card.cloneNode(true);
         clone.classList.add("is-clone");
         clone.setAttribute("aria-hidden", "true");
+        clone.inert = true;
+        onClone(clone);
         track.appendChild(clone);
       });
       track.querySelectorAll("img").forEach(function (image) {
         image.setAttribute("draggable", "false");
       });
-      position = cloneCount;
+      position = cloneCount + current;
       animating = false;
       pending = 0;
       measure();
       updateCounter();
+      onRebuild();
     }
 
     track.addEventListener("transitionend", function (event) {
@@ -418,6 +563,7 @@
       normalize();
       applyTransform(false);
       updateCounter();
+      onSettle();
       if (pending) {
         var delta = pending;
         pending = 0;
@@ -434,27 +580,73 @@
     });
 
     viewport.addEventListener("pointerdown", function (event) {
-      startX = event.clientX;
+      if (event.button && event.button !== 0) return;
+      start = { x: event.clientX, y: event.clientY };
     });
 
     viewport.addEventListener("pointerup", function (event) {
-      if (startX === null) return;
-      var deltaX = event.clientX - startX;
-      startX = null;
-      if (Math.abs(deltaX) > 45) move(deltaX < 0 ? 1 : -1);
+      if (!start) return;
+      var deltaX = event.clientX - start.x;
+      var deltaY = event.clientY - start.y;
+      start = null;
+      if (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+        suppressClick = true;
+        window.clearTimeout(suppressTimer);
+        suppressTimer = window.setTimeout(function () {
+          suppressClick = false;
+        }, 400);
+        move(deltaX < 0 ? 1 : -1);
+      }
     });
 
     viewport.addEventListener("pointercancel", function () {
-      startX = null;
+      start = null;
     });
+
+    viewport.addEventListener("click", function (event) {
+      if (!suppressClick) return;
+      event.preventDefault();
+      event.stopPropagation();
+      suppressClick = false;
+    }, true);
 
     window.addEventListener("resize", function () {
       cancelAnimationFrame(resizeFrame);
-      resizeFrame = requestAnimationFrame(measure);
+      resizeFrame = requestAnimationFrame(function () {
+        if (targetCloneCount() !== cloneCount) rebuild(true);
+        else measure();
+      });
     });
 
-    rebuild();
-    return { refresh: rebuild };
+    rebuild(false);
+    return { refresh: function () { rebuild(true); } };
+  }
+
+  function setupCarousel() {
+    var youtubeRoot = document.querySelector("[data-carousel='youtube']");
+    var youtubeVideos = setupYouTubeVideos(youtubeRoot);
+    var instances = [];
+    var docs = createCarousel(document.querySelector("[data-carousel='docs']"), {
+      viewport: ".doc-viewport",
+      track: ".doc-track",
+      item: ".doc-card",
+      counter: ".doc-counter",
+      prev: ".doc-prev",
+      next: ".doc-next"
+    });
+    var youtube = createCarousel(youtubeRoot, {
+      viewport: ".yt-viewport",
+      track: ".yt-track",
+      item: ".yt-card",
+      counter: ".yt-counter",
+      prev: ".yt-prev",
+      next: ".yt-next",
+      onRebuild: youtubeVideos.refresh,
+      onSettle: youtubeVideos.syncClones
+    });
+    if (docs) instances.push(docs);
+    if (youtube) instances.push(youtube);
+    return instances;
   }
 
   function setYear() {
@@ -616,12 +808,12 @@
     });
   }
 
-  var carousel = null;
+  var carousels = [];
 
   renderAssets();
   setupNav();
   setupActiveNav();
-  carousel = setupCarousel();
+  carousels = setupCarousel();
   setYear();
   setupReviewTimes();
   setupReviewLightbox();
@@ -629,12 +821,16 @@
   window.NauraAssets = {
     apply: function () {
       renderAssets();
-      if (carousel) carousel.refresh();
+      carousels.forEach(function (instance) {
+        instance.refresh();
+      });
     },
     setPlaceholderMode: function (value) {
       config.settings.usePlaceholders = Boolean(value);
       renderAssets();
-      if (carousel) carousel.refresh();
+      carousels.forEach(function (instance) {
+        instance.refresh();
+      });
     }
   };
 })();
