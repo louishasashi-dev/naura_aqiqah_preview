@@ -423,6 +423,215 @@
     };
   }
 
+  function setupReviewCards(root) {
+    var noop = function () {};
+    var empty = {
+      refresh: noop,
+      syncClones: noop
+    };
+    if (!root) return empty;
+    var viewport = root.querySelector(".testimonial-viewport");
+    var track = root.querySelector(".testimonial-track");
+    var dialog = root.querySelector(".review-dialog");
+    if (!viewport || !track || !dialog) return empty;
+
+    var reviewLinks = {
+      "Arsyila Azzahra Rahman": "https://maps.app.goo.gl/Y4EfcaA2yVwiScPE6",
+      "Hanif Afriyan": "https://maps.app.goo.gl/jDN4ZAtDfY7y7vmTA",
+      "Jafra skin care Cengkareng": "https://maps.app.goo.gl/E9idZ1pnQAKkewQq6",
+      "Suci Almeera Shalu": "https://maps.app.goo.gl/kyvszo3Ek31iLnie6",
+      "Lia ismiati": "https://maps.app.goo.gl/w9i7prjb8MfB1gPN7",
+      "Prinanti Mandalia": "https://maps.app.goo.gl/ohPaGskLQ7bpzus46",
+      "Albirru Tenta Tarigan": "https://maps.app.goo.gl/SgSrDp7Q3C4Es6GV6",
+      "Eko Nur Wahyudin": "https://maps.app.goo.gl/7YksiuPdWckjSxVD8"
+    };
+    var closeButton = dialog.querySelector(".review-dialog-close");
+    var scroller = dialog.querySelector(".review-dialog-scroll");
+    var image = dialog.querySelector(".review-dialog-image");
+    var prevButton = dialog.querySelector(".review-dialog-prev");
+    var nextButton = dialog.querySelector(".review-dialog-next");
+    var indicator = dialog.querySelector(".review-dialog-indicator");
+    var dialogStars = dialog.querySelector(".review-dialog-stars");
+    var dialogWaktu = dialog.querySelector(".review-dialog-waktu");
+    var dialogTitle = dialog.querySelector("#review-dialog-title");
+    var dialogSumber = dialog.querySelector(".review-dialog-sumber");
+    var dialogText = dialog.querySelector(".review-dialog-text");
+    var dialogLink = dialog.querySelector(".review-dialog-link");
+    var photos = [];
+    var photoIndex = 0;
+    var lastTrigger = null;
+    var resizeFrame = 0;
+
+    function reviewerKey(card) {
+      var author = card.querySelector(".review-author strong");
+      var name = author ? author.textContent.trim() : "";
+      if (name.indexOf("Jafra skin care Cengkareng") === 0) return "Jafra skin care Cengkareng";
+      return name;
+    }
+
+    function findLink(card) {
+      return reviewLinks[reviewerKey(card)] || "";
+    }
+
+    function addControls(card) {
+      var author = card.querySelector(".review-author");
+      var text = card.querySelector(".review-text");
+      var photosArea = card.querySelector(".review-photos");
+      if (author && text && !author.querySelector(".review-more")) {
+        var more = document.createElement("button");
+        more.type = "button";
+        more.className = "review-more";
+        more.textContent = "Selengkapnya";
+        more.setAttribute("aria-haspopup", "dialog");
+        author.appendChild(more);
+      }
+      if (photosArea && !card.querySelector(".review-photo-hint")) {
+        var hint = document.createElement("p");
+        hint.className = "review-photo-hint";
+        hint.textContent = "Perbesar gambar & baca ulasan";
+        photosArea.insertAdjacentElement("afterend", hint);
+      }
+      if (card && !card.querySelector(".review-map-link")) {
+        var map = document.createElement("a");
+        map.className = "review-map-link";
+        map.textContent = "Lihat di Google Maps";
+        map.target = "_blank";
+        map.rel = "noopener";
+        var hintEl = card.querySelector(".review-photo-hint");
+        if (hintEl) hintEl.insertAdjacentElement("afterend", map);
+      }
+    }
+
+    function isClamped(element) {
+      var style = window.getComputedStyle(element);
+      var lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.7;
+      return element.scrollHeight > Math.ceil(lineHeight * 2) + 1;
+    }
+
+    function syncClones() {
+      var bounds = viewport.getBoundingClientRect();
+      track.querySelectorAll(".testimonial-card.is-clone").forEach(function (card) {
+        var box = card.getBoundingClientRect();
+        var visible = box.right > bounds.left + 1 && box.left < bounds.right - 1;
+        card.inert = !visible;
+        card.setAttribute("aria-hidden", String(!visible));
+      });
+    }
+
+    function recalculate() {
+      track.querySelectorAll(".testimonial-card").forEach(function (card) {
+        var text = card.querySelector(".review-text");
+        var more = card.querySelector(".review-more");
+        var photosArea = card.querySelector(".review-photos");
+        var map = card.querySelector(".review-map-link");
+        var href = findLink(card);
+        if (photosArea) photosArea.dataset.count = String(photosArea.querySelectorAll("a").length);
+        if (text && more) more.hidden = !isClamped(text);
+        if (map && href) map.href = href;
+      });
+      syncClones();
+    }
+
+    function updatePhoto() {
+      if (!photos.length) return;
+      var link = photos[photoIndex];
+      var img = link.querySelector("img");
+      image.src = link.getAttribute("href");
+      image.alt = img ? img.getAttribute("alt") : link.getAttribute("aria-label");
+      prevButton.hidden = photos.length < 2;
+      nextButton.hidden = photos.length < 2;
+      indicator.hidden = photos.length < 2;
+      indicator.textContent = photos.length > 1 ? (photoIndex + 1) + " / " + photos.length : "";
+    }
+
+    function movePhoto(step) {
+      if (photos.length < 2) return;
+      photoIndex = (photoIndex + step + photos.length) % photos.length;
+      updatePhoto();
+    }
+
+    function openDialog(card, trigger) {
+      if (!card || dialog.open) return;
+      var stars = card.querySelector(".stars");
+      var waktu = card.querySelector(".waktu-ulasan");
+      var author = card.querySelector(".review-author strong");
+      var sumber = card.querySelector(".review-author span");
+      var text = card.querySelector(".review-text");
+      dialogStars.textContent = stars ? stars.textContent : "";
+      dialogWaktu.textContent = waktu ? waktu.textContent : "";
+      dialogTitle.textContent = author ? author.textContent : "";
+      dialogSumber.textContent = sumber ? sumber.textContent : "";
+      dialogText.textContent = text ? text.innerText.trim() : "";
+      dialogLink.href = findLink(card);
+      photos = Array.prototype.slice.call(card.querySelectorAll(".review-photos a"));
+      photoIndex = 0;
+      updatePhoto();
+      lastTrigger = trigger;
+      if (scroller) scroller.scrollTop = 0;
+      var scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.documentElement.style.setProperty("--review-scrollbar-width", scrollbarWidth + "px");
+      document.body.classList.add("review-dialog-open");
+      dialog.showModal();
+      closeButton.focus({ preventScroll: true });
+    }
+
+    track.querySelectorAll(".testimonial-card:not(.is-clone)").forEach(addControls);
+
+    root.addEventListener("click", function (event) {
+      var more = event.target.closest(".review-more");
+      if (more) {
+        openDialog(more.closest(".testimonial-card"), more);
+        return;
+      }
+      var photo = event.target.closest(".review-photos a");
+      if (photo) {
+        event.preventDefault();
+        openDialog(photo.closest(".testimonial-card"), photo);
+      }
+    });
+
+    closeButton.addEventListener("click", function () {
+      dialog.close();
+    });
+
+    prevButton.addEventListener("click", function () { movePhoto(-1); });
+    nextButton.addEventListener("click", function () { movePhoto(1); });
+
+    document.addEventListener("keydown", function (event) {
+      if (!dialog.open) return;
+      if (event.key === "ArrowLeft") movePhoto(-1);
+      if (event.key === "ArrowRight") movePhoto(1);
+    });
+
+    dialog.addEventListener("click", function (event) {
+      if (event.target === dialog) dialog.close();
+    });
+
+    dialog.addEventListener("close", function () {
+      document.body.classList.remove("review-dialog-open");
+      document.documentElement.style.removeProperty("--review-scrollbar-width");
+      image.removeAttribute("src");
+      if (lastTrigger && document.contains(lastTrigger)) lastTrigger.focus({ preventScroll: true });
+      lastTrigger = null;
+    });
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(recalculate);
+    }
+    window.addEventListener("load", recalculate);
+    window.addEventListener("resize", function () {
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(recalculate);
+    });
+
+    recalculate();
+
+    return {
+      refresh: recalculate,
+      syncClones: syncClones
+    };
+  }
+
   function createCarousel(root, options) {
     if (!root) return null;
 
@@ -456,6 +665,7 @@
 
     function visibleCount() {
       if (window.innerWidth <= 640) return 1;
+      if (options.maxVisible) return Math.min(options.maxVisible, realCount);
       if (window.innerWidth <= 1100) return 2;
       return 3;
     }
@@ -625,6 +835,8 @@
   function setupCarousel() {
     var youtubeRoot = document.querySelector("[data-carousel='youtube']");
     var youtubeVideos = setupYouTubeVideos(youtubeRoot);
+    var testimoniRoot = document.querySelector("[data-carousel='testimoni']");
+    var reviewCards = setupReviewCards(testimoniRoot);
     var instances = [];
     var docs = createCarousel(document.querySelector("[data-carousel='docs']"), {
       viewport: ".doc-viewport",
@@ -644,8 +856,20 @@
       onRebuild: youtubeVideos.refresh,
       onSettle: youtubeVideos.syncClones
     });
+    var testimoni = createCarousel(testimoniRoot, {
+      viewport: ".testimonial-viewport",
+      track: ".testimonial-track",
+      item: ".testimonial-card",
+      counter: ".testimonial-counter",
+      prev: ".testimonial-prev",
+      next: ".testimonial-next",
+      maxVisible: 2,
+      onRebuild: reviewCards.refresh,
+      onSettle: reviewCards.syncClones
+    });
     if (docs) instances.push(docs);
     if (youtube) instances.push(youtube);
+    if (testimoni) instances.push(testimoni);
     return instances;
   }
 
@@ -681,10 +905,9 @@
   }
 
   function setupReviewTimes() {
-    var nodes = document.querySelectorAll(".waktu-ulasan[data-tanggal]");
-    if (!nodes.length) return;
-
     function perbaruiWaktu() {
+      var nodes = document.querySelectorAll(".waktu-ulasan[data-tanggal]");
+      if (!nodes.length) return;
       var sekarang = new Date();
       nodes.forEach(function (el) {
         el.textContent = waktuRelatif(el.getAttribute("data-tanggal"), sekarang);
@@ -695,119 +918,6 @@
     setInterval(perbaruiWaktu, 60 * 60 * 1000);
   }
 
-  function setupReviewLightbox() {
-    var overlay = document.getElementById("review-lightbox");
-    var photoAreas = document.querySelectorAll(".review-photos");
-    if (!overlay || !photoAreas.length) return;
-
-    var image = overlay.querySelector(".lightbox-image");
-    var caption = overlay.querySelector(".lightbox-caption");
-    var closeButton = overlay.querySelector(".lightbox-close");
-    var prevButton = overlay.querySelector(".lightbox-prev");
-    var nextButton = overlay.querySelector(".lightbox-next");
-    var groups = [];
-    var background = Array.prototype.slice.call(document.querySelectorAll("body > :not(.lightbox)"));
-    var currentGroup = 0;
-    var currentIndex = 0;
-    var lastTrigger = null;
-
-    photoAreas.forEach(function (area) {
-      var links = Array.prototype.slice.call(area.querySelectorAll("a"));
-      area.dataset.count = String(links.length);
-
-      var card = area.closest(".review-card");
-      if (card && !card.querySelector(".review-photo-hint")) {
-        var hint = document.createElement("p");
-        hint.className = "review-photo-hint";
-        hint.textContent = "Klik gambar untuk memperbesar";
-        area.insertAdjacentElement("afterend", hint);
-      }
-
-      groups.push(links.map(function (link) {
-        var img = link.querySelector("img");
-        return {
-          link: link,
-          src: link.getAttribute("href"),
-          alt: img ? img.getAttribute("alt") : link.getAttribute("aria-label")
-        };
-      }));
-    });
-
-    function show() {
-      var group = groups[currentGroup];
-      var item = group[currentIndex];
-      image.src = item.src;
-      image.alt = item.alt;
-      caption.textContent = item.alt;
-      prevButton.hidden = group.length < 2;
-      nextButton.hidden = group.length < 2;
-    }
-
-    function open(groupIndex, itemIndex) {
-      currentGroup = groupIndex;
-      currentIndex = itemIndex;
-      lastTrigger = groups[groupIndex][itemIndex].link;
-      show();
-      overlay.hidden = false;
-      document.body.classList.add("lightbox-open");
-      background.forEach(function (el) { el.inert = true; });
-      closeButton.focus();
-    }
-
-    function hide() {
-      overlay.hidden = true;
-      document.body.classList.remove("lightbox-open");
-      background.forEach(function (el) { el.inert = false; });
-      image.removeAttribute("src");
-      if (lastTrigger) lastTrigger.focus();
-    }
-
-    function move(step) {
-      var group = groups[currentGroup];
-      currentIndex = (currentIndex + step + group.length) % group.length;
-      show();
-    }
-
-    groups.forEach(function (group, groupIndex) {
-      group.forEach(function (item, itemIndex) {
-        item.link.addEventListener("click", function (event) {
-          event.preventDefault();
-          open(groupIndex, itemIndex);
-        });
-      });
-    });
-
-    closeButton.addEventListener("click", hide);
-    prevButton.addEventListener("click", function () { move(-1); });
-    nextButton.addEventListener("click", function () { move(1); });
-    overlay.addEventListener("click", function (event) {
-      if (!event.target.closest("button, .lightbox-image")) hide();
-    });
-    document.addEventListener("keydown", function (event) {
-      if (overlay.hidden) return;
-      if (event.key === "Escape") hide();
-      if (event.key === "ArrowLeft") move(-1);
-      if (event.key === "ArrowRight") move(1);
-      if (event.key !== "Tab") return;
-      var focusable = Array.prototype.slice.call(overlay.querySelectorAll("button")).filter(function (button) {
-        return !button.hidden;
-      });
-      var first = focusable[0];
-      var last = focusable[focusable.length - 1];
-      if (!first) return;
-      if (!overlay.contains(document.activeElement)) {
-        event.preventDefault();
-        first.focus();
-      } else if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    });
-  }
-
   var carousels = [];
 
   renderAssets();
@@ -816,7 +926,6 @@
   carousels = setupCarousel();
   setYear();
   setupReviewTimes();
-  setupReviewLightbox();
 
   window.NauraAssets = {
     apply: function () {

@@ -457,8 +457,11 @@
                     <p>Cerita dan pengalaman Ayah Bunda yang telah mempercayakan kebutuhan aqiqah kepada Naura Aqiqah
                         cabang Tangerang.</p>
                 </div>
-                <div class="testimonial-grid">
-                    <article class="testimonial-card review-card">
+                <div class="doc-carousel testimonial-carousel" data-carousel="testimoni" aria-roledescription="carousel"
+                    aria-label="Testimoni pelanggan">
+                    <div class="doc-viewport testimonial-viewport">
+                        <div class="doc-track testimonial-track">
+                            <article class="testimonial-card review-card">
                         <div class="review-head">
                             <div class="stars" aria-label="5 dari 5 bintang">★★★★★</div>
                             <span class="waktu-ulasan" data-tanggal="2026-11-12"></span>
@@ -644,7 +647,37 @@
                                     alt="Foto ulasan Google Maps dari Eko Nur Wahyudin, bagian 2" loading="lazy"
                                     decoding="async"></a>
                         </div>
-                    </article>
+                            </article>
+                        </div>
+                    </div>
+                    <div class="doc-controls">
+                        <button class="doc-control testimonial-prev" type="button"
+                            aria-label="Testimoni sebelumnya"><span aria-hidden="true">←</span></button>
+                        <div class="doc-counter testimonial-counter" aria-live="polite">01 / 08</div>
+                        <button class="doc-control testimonial-next" type="button"
+                            aria-label="Testimoni berikutnya"><span aria-hidden="true">→</span></button>
+                    </div>
+                    <dialog class="review-dialog" id="review-detail-dialog" aria-labelledby="review-dialog-title">
+                        <button class="review-dialog-close" type="button" aria-label="Tutup detail ulasan">×</button>
+                        <div class="review-dialog-scroll">
+                            <div class="review-dialog-media">
+                                <button class="review-dialog-nav review-dialog-prev" type="button"
+                                    aria-label="Foto sebelumnya">‹</button>
+                                <img class="review-dialog-image" alt="">
+                                <button class="review-dialog-nav review-dialog-next" type="button"
+                                    aria-label="Foto berikutnya">›</button>
+                                <div class="review-dialog-indicator" aria-live="polite"></div>
+                            </div>
+                            <div class="review-dialog-copy">
+                                <div class="review-dialog-stars"></div>
+                                <span class="review-dialog-waktu"></span>
+                                <h2 id="review-dialog-title"></h2>
+                                <span class="review-dialog-sumber"></span>
+                                <p class="review-dialog-text"></p>
+                                <a class="review-dialog-link btn btn-primary" target="_blank" rel="noopener">Lihat di Google Maps</a>
+                            </div>
+                        </div>
+                    </dialog>
                 </div>
             </div>
         </section>
@@ -803,16 +836,6 @@
                 Catering.</span><span>Dibangun dengan konfigurasi aset yang mudah diganti.</span></div>
     </footer>
 
-    <div class="lightbox" id="review-lightbox" role="dialog" aria-modal="true" aria-label="Pratinjau foto ulasan"
-        hidden>
-        <button class="lightbox-close" type="button" aria-label="Tutup pratinjau">×</button>
-        <button class="lightbox-nav lightbox-prev" type="button" aria-label="Foto sebelumnya" hidden>‹</button>
-        <figure class="lightbox-figure">
-            <img class="lightbox-image" alt="">
-            <figcaption class="lightbox-caption"></figcaption>
-        </figure>
-        <button class="lightbox-nav lightbox-next" type="button" aria-label="Foto berikutnya" hidden>›</button>
-    </div>
 </body>
 
 </html>
