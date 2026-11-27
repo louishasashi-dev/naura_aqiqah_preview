@@ -447,7 +447,9 @@
     };
     var closeButton = dialog.querySelector(".review-dialog-close");
     var scroller = dialog.querySelector(".review-dialog-scroll");
+    var media = dialog.querySelector(".review-dialog-media");
     var image = dialog.querySelector(".review-dialog-image");
+    image.draggable = false;
     var prevButton = dialog.querySelector(".review-dialog-prev");
     var nextButton = dialog.querySelector(".review-dialog-next");
     var indicator = dialog.querySelector(".review-dialog-indicator");
@@ -461,6 +463,7 @@
     var photoIndex = 0;
     var lastTrigger = null;
     var resizeFrame = 0;
+    var swipeStart = null;
 
     function reviewerKey(card) {
       var author = card.querySelector(".review-author strong");
@@ -471,6 +474,12 @@
 
     function findLink(card) {
       return reviewLinks[reviewerKey(card)] || "";
+    }
+
+    function photoHint(count) {
+      return count > 1
+        ? "Ketuk untuk lihat " + count + " foto & ulasan"
+        : "Ketuk foto untuk baca ulasan lengkap";
     }
 
     function addControls(card) {
@@ -500,6 +509,34 @@
         var hintEl = card.querySelector(".review-photo-hint");
         if (hintEl) hintEl.insertAdjacentElement("afterend", map);
       }
+      if (photosArea && !card.querySelector(".review-photo-tap")) {
+        var count = photosArea.querySelectorAll("a").length;
+        var firstImg = photosArea.querySelector("img");
+        var tap = document.createElement("button");
+        var frame = document.createElement("span");
+        var img = document.createElement("img");
+        var mobileHint = document.createElement("span");
+        tap.type = "button";
+        tap.className = "review-photo-tap";
+        tap.setAttribute("aria-haspopup", "dialog");
+        frame.className = "review-photo-frame";
+        img.src = firstImg ? firstImg.getAttribute("src") : "";
+        img.alt = firstImg ? firstImg.getAttribute("alt") : "Foto ulasan";
+        img.loading = "lazy";
+        img.decoding = "async";
+        frame.appendChild(img);
+        mobileHint.className = "review-photo-hint-mobile";
+        mobileHint.textContent = photoHint(count);
+        tap.appendChild(frame);
+        if (count > 1) {
+          var badge = document.createElement("span");
+          badge.className = "review-photo-badge";
+          badge.textContent = count + " foto";
+          tap.appendChild(badge);
+        }
+        tap.appendChild(mobileHint);
+        photosArea.insertAdjacentElement("afterend", tap);
+      }
     }
 
     function isClamped(element) {
@@ -525,7 +562,12 @@
         var photosArea = card.querySelector(".review-photos");
         var map = card.querySelector(".review-map-link");
         var href = findLink(card);
-        if (photosArea) photosArea.dataset.count = String(photosArea.querySelectorAll("a").length);
+        if (photosArea) {
+          var count = photosArea.querySelectorAll("a").length;
+          photosArea.dataset.count = String(count);
+          var tapHint = card.querySelector(".review-photo-hint-mobile");
+          if (tapHint) tapHint.textContent = photoHint(count);
+        }
         if (text && more) more.hidden = !isClamped(text);
         if (map && href) map.href = href;
       });
@@ -561,7 +603,7 @@
       dialogWaktu.textContent = waktu ? waktu.textContent : "";
       dialogTitle.textContent = author ? author.textContent : "";
       dialogSumber.textContent = sumber ? sumber.textContent : "";
-      dialogText.textContent = text ? text.innerText.trim() : "";
+      dialogText.textContent = text ? text.textContent.trim() : "";
       dialogLink.href = findLink(card);
       photos = Array.prototype.slice.call(card.querySelectorAll(".review-photos a"));
       photoIndex = 0;
@@ -587,7 +629,10 @@
       if (photo) {
         event.preventDefault();
         openDialog(photo.closest(".testimonial-card"), photo);
+        return;
       }
+      var tap = event.target.closest(".review-photo-tap");
+      if (tap) openDialog(tap.closest(".testimonial-card"), tap);
     });
 
     closeButton.addEventListener("click", function () {
@@ -596,6 +641,25 @@
 
     prevButton.addEventListener("click", function () { movePhoto(-1); });
     nextButton.addEventListener("click", function () { movePhoto(1); });
+
+    media.addEventListener("pointerdown", function (event) {
+      if (event.button && event.button !== 0) return;
+      swipeStart = { x: event.clientX, y: event.clientY };
+    });
+
+    media.addEventListener("pointerup", function (event) {
+      if (!swipeStart) return;
+      var deltaX = event.clientX - swipeStart.x;
+      var deltaY = event.clientY - swipeStart.y;
+      swipeStart = null;
+      if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY)) {
+        movePhoto(deltaX < 0 ? 1 : -1);
+      }
+    });
+
+    media.addEventListener("pointercancel", function () {
+      swipeStart = null;
+    });
 
     document.addEventListener("keydown", function (event) {
       if (!dialog.open) return;
@@ -920,12 +984,20 @@
 
   var carousels = [];
 
-  renderAssets();
-  setupNav();
-  setupActiveNav();
-  carousels = setupCarousel();
-  setYear();
-  setupReviewTimes();
+  function initSite() {
+    renderAssets();
+    setupNav();
+    setupActiveNav();
+    carousels = setupCarousel();
+    setYear();
+    setupReviewTimes();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initSite, { once: true });
+  } else {
+    initSite();
+  }
 
   window.NauraAssets = {
     apply: function () {
